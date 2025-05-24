@@ -2,7 +2,8 @@ name: Deploy Frontend
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 env:
   REGISTRY: docker.io
@@ -30,17 +31,24 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
+
     steps:
-      - name: Install ssh key
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up SSH key
         uses: shimataro/ssh-key-action@v2
         with:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
 
-      - name: Deploy Frontend
+      - name: Copy docker-compose and config to server
         run: |
           scp -o StrictHostKeyChecking=no docker-compose.prod.yml root@${{ secrets.SERVER_IP }}:/frontend
           scp -o StrictHostKeyChecking=no nginx.frontend.conf root@${{ secrets.SERVER_IP }}:/frontend
+
+      - name: Deploy Frontend via SSH
+        run: |
           ssh -o StrictHostKeyChecking=no root@${{ secrets.SERVER_IP }} << EOF
             cd /frontend
             docker pull ${{ env.REGISTRY }}/${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
