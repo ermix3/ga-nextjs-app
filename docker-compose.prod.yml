@@ -1,6 +1,6 @@
 services:
   frontend:
-    image: your-dockerhub-username/nextjs-frontend:latest
+    image: ${secrets.DOCKER_HUB_USERNAME}/nextjs-frontend:latest
     ports:
       - "3000:3000"
     restart: unless-stopped
