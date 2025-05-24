@@ -1,4 +1,4 @@
-name: Deploy Frontend
+name: Deploy NextJS Frontend
 
 on:
   push:
@@ -8,6 +8,7 @@ on:
 env:
   REGISTRY: docker.io
   IMAGE_NAME: nextjs-frontend
+  SHORT_SHA: ${{ github.sha }}
 
 jobs:
   build-and-push:
@@ -22,13 +23,16 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
+      - name: Set short SHA
+        run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
       - name: Build and push
         uses: docker/build-push-action@v3
         with:
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.REGISTRY }}/${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.SHORT_SHA }}
 
   deploy:
     needs: build-and-push
