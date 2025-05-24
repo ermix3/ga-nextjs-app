@@ -1,6 +1,6 @@
 services:
   frontend:
-    image: ${secrets.DOCKER_HUB_USERNAME}/nextjs-frontend:latest
+    image: ermix3/nextjs-frontend:latest
     ports:
       - "3000:3000"
     restart: unless-stopped
