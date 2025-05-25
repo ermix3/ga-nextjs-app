@@ -1,6 +1,6 @@
 services:
   frontend:
-    image: ermix3/nextjs-frontend:latest
+    image: front_image
     ports:
       - "3000:3000"
     restart: unless-stopped
