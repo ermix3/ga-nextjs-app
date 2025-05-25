@@ -9,6 +9,7 @@ env:
   REGISTRY: docker.io
   IMAGE_NAME: nextjs-frontend
   SHORT_SHA: ${{ github.sha }}
+  NETWORK_NAME: fullstack-network
 
 jobs:
   build-and-push:
@@ -103,12 +104,18 @@ jobs:
           
             export DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}
             export IMAGE_NAME=${{ env.IMAGE_NAME }}
+            export NETWORK_NAME=${{ env.NETWORK_NAME }}
             
             echo "Pulling latest frontend image..."
             docker pull ${FRONTEND_IMAGE}
           
-            echo "Ensuring network exists..."
-            docker network inspect \$NETWORK_NAME >/dev/null 2>&1 || docker network create \$NETWORK_NAME
+            echo "Ensuring Docker network exists..."
+            if ! docker network inspect "$NETWORK_NAME" >/dev/null 2>&1; then
+              echo "Creating Docker network: $NETWORK_NAME"
+              docker network create "$NETWORK_NAME"
+            else
+              echo "Network $NETWORK_NAME already exists."
+            fi
 
             echo "Run with the appropriate docker compose command"
             if command -v docker compose &> /dev/null; then
