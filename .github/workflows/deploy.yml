@@ -118,6 +118,7 @@ jobs:
           
             export DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}
             export IMAGE_NAME=${{ env.IMAGE_NAME }}
+            export APP_NAME=${{ secrets.APP_NAME }}
           
             echo "Pulling latest frontend image..."
             docker pull ${FRONTEND_IMAGE}
