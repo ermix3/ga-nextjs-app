@@ -1,6 +1,6 @@
 services:
   frontend:
-    image: front_image
+    image: ${REGISTRY}/${DOCKER_HUB_USERNAME}/nextjs-frontend:${TAG:-latest}
     ports:
       - "3000:3000"
     restart: unless-stopped

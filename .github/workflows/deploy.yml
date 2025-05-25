@@ -100,10 +100,6 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no root@${{ secrets.SERVER_IP }} << EOF
             cd /frontend
-            # Update the Docker image reference in docker-compose to use your DockerHub username
-            # Properly escape the replacement string for sed
-            ESCAPED_IMAGE=$(echo "$FRONTEND_IMAGE" | sed 's/[\/&]/\\&/g')
-            sed -i "s|front_image|${ESCAPED_IMAGE}|g" docker-compose.prod.yml
 
             docker pull ${FRONTEND_IMAGE}
             if command -v docker compose &> /dev/null; then
