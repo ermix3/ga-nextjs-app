@@ -100,8 +100,17 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no root@${{ secrets.SERVER_IP }} << EOF
             cd /frontend
-
+          
+            export DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}
+            export IMAGE_NAME=${{ env.IMAGE_NAME }}
+            
+            echo "Pulling latest frontend image..."
             docker pull ${FRONTEND_IMAGE}
+          
+            echo "Ensuring network exists..."
+            docker network inspect \$NETWORK_NAME >/dev/null 2>&1 || docker network create \$NETWORK_NAME
+
+            echo "Run with the appropriate docker compose command"
             if command -v docker compose &> /dev/null; then
               docker compose -f docker-compose.prod.yml down
               docker compose -f docker-compose.prod.yml up -d
@@ -109,4 +118,7 @@ jobs:
               docker-compose -f docker-compose.prod.yml down
               docker-compose -f docker-compose.prod.yml up -d
             fi
+          
+            echo "Remove unused images to free disk space"
+            docker image prune -af
           EOF
