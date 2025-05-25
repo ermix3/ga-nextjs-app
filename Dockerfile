@@ -16,7 +16,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 
-ENV NEXT_PUBLIC_API_URL=https://api.yourdomain.com
+ENV NEXT_PUBLIC_API_URL=https://136.244.91.127/api
 ENV NODE_ENV=production
 
 EXPOSE 3000
