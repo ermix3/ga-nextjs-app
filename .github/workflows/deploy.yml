@@ -84,6 +84,9 @@ jobs:
             else
               echo "Docker Compose is already installed."
             fi
+
+            # Create frontend directory if it doesn't exist
+            mkdir -p /frontend
           EOF
 
       - name: Copy docker-compose and config to server
@@ -92,16 +95,20 @@ jobs:
           scp -o StrictHostKeyChecking=no nginx.frontend.conf root@${{ secrets.SERVER_IP }}:/frontend
 
       - name: Deploy Frontend via SSH
+        env:
+          FRONTEND_IMAGE: ${{ env.REGISTRY }}/${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
         run: |
           ssh -o StrictHostKeyChecking=no root@${{ secrets.SERVER_IP }} << EOF
             cd /frontend
-            docker pull ${{ env.REGISTRY }}/${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
+            # Update the Docker image reference in docker-compose to use your DockerHub username
+            sed -i "s/front_image/${FRONTEND_IMAGE}/g" docker-compose.prod.yml
+
+            docker pull ${FRONTEND_IMAGE}
             if command -v docker compose &> /dev/null; then
               docker compose -f docker-compose.prod.yml down
               docker compose -f docker-compose.prod.yml up -d
             else
               docker-compose -f docker-compose.prod.yml down
               docker-compose -f docker-compose.prod.yml up -d
-             fi
+            fi
           EOF
-
