@@ -5,8 +5,6 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=http://136.244.91.127/api
     networks:
       - fullstack-network
 
