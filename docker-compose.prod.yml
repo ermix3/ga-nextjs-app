@@ -3,8 +3,6 @@ services:
     image: ${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:latest
     container_name: ${APP_NAME}_frontend
     restart: unless-stopped
-    ports:
-      - "3000:3000"
     networks:
       - fullstack-network
     healthcheck:
