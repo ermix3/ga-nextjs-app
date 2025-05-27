@@ -5,6 +5,10 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
+
+ARG NEXT_PUBLIC_API_URL=http://136.244.91.127/api
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 RUN npm run build
 
 # Stage 2: Runtime
@@ -16,7 +20,6 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 
-ENV NEXT_PUBLIC_API_URL=http://136.244.91.127/api
 ENV NODE_ENV=production
 
 EXPOSE 3000
