@@ -4,6 +4,7 @@ on:
   workflow_run:
     workflows: ["CI - NextJS frontend build, push"]
     types: [completed]
+    branches: [ develop, main ]
 
 env:
   REGISTRY: docker.io
@@ -12,6 +13,7 @@ env:
 
 jobs:
   deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
