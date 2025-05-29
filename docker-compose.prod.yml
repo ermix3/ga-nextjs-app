@@ -21,8 +21,8 @@ services:
     depends_on:
       - frontend
     volumes:
-      - ./nginx.frontend.conf:/etc/nginx/nginx.conf
-      - ./ssl:/etc/nginx/ssl
+      - ./nginx.frontend.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt/live/abdeel.me/:/etc/letsencrypt/live/abdeel.me/:ro
     networks:
       - fullstack-network
 
