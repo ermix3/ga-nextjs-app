@@ -1,42 +1,17 @@
-name: Deploy NextJS Frontend
+name: CD - NextJS deploy to server
 
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["CI - NextJS frontend build, push"]
+    types: [completed]
 
 env:
   REGISTRY: docker.io
   IMAGE_NAME: nextjs-frontend
-  SHORT_SHA: ${{ github.sha }}
   NETWORK_NAME: fullstack-network
 
 jobs:
-  build-and-push:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
-
-      - name: Set short SHA
-        run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-
-      - name: Build and push
-        uses: docker/build-push-action@v3
-        with:
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.REGISTRY }}/${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.SHORT_SHA }}
-
   deploy:
-    needs: build-and-push
     runs-on: ubuntu-latest
 
     steps:
@@ -54,7 +29,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no root@${{ secrets.SERVER_IP }} << EOF
 
             export NETWORK_NAME=${{ env.NETWORK_NAME }}
-            
+          
             # Check if Docker is installed
             if ! command -v docker &> /dev/null; then
               echo "Docker not found. Installing Docker..."
@@ -89,6 +64,9 @@ jobs:
               echo "Docker Compose is already installed."
             fi
 
+            echo "Delete old frontend directory if it exists"
+            rm -rf /frontend
+            
             echo "Create frontend directory if it doesn't exist"
             mkdir -p /frontend
 
@@ -104,7 +82,7 @@ jobs:
             docker image prune -af
           EOF
 
-      - name: Copy docker-compose and config to server
+      - name: Copy files docker-compose and nginx config
         run: |
           scp -o StrictHostKeyChecking=no docker-compose.prod.yml root@${{ secrets.SERVER_IP }}:/frontend
           scp -o StrictHostKeyChecking=no nginx.frontend.conf root@${{ secrets.SERVER_IP }}:/frontend
