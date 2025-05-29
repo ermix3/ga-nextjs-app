@@ -10,7 +10,6 @@ env:
   IMAGE_NAME: nextjs-frontend
   SHORT_SHA: ${{ github.sha }}
   NETWORK_NAME: fullstack-network
-  DEPLOYMENT_TIMEOUT: 120
 
 jobs:
   build-and-push:
@@ -50,98 +49,86 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
 
-      - name: Copy files to server
+      - name: Check and install Docker on remote server
+        run: |
+          ssh -o StrictHostKeyChecking=no root@${{ secrets.SERVER_IP }} << EOF
+
+            export NETWORK_NAME=${{ env.NETWORK_NAME }}
+            
+            # Check if Docker is installed
+            if ! command -v docker &> /dev/null; then
+              echo "Docker not found. Installing Docker..."
+              apt-get update
+              apt-get install -y ca-certificates curl gnupg
+              install -m 0755 -d /etc/apt/keyrings
+              curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+              chmod a+r /etc/apt/keyrings/docker.gpg
+              echo "deb [arch=\$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \$(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+              apt-get update
+              apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+              echo "Docker installed successfully."
+            else
+              echo "Docker is already installed."
+            fi
+
+            # Check if Docker Compose is installed
+            if ! command -v docker compose &> /dev/null && ! command -v docker-compose &> /dev/null; then
+              echo "Docker Compose not found. Installing Docker Compose..."
+              apt-get update
+              apt-get install -y docker-compose-plugin
+
+              # If the plugin fails, try the standalone version as fallback
+              if ! command -v docker compose &> /dev/null; then
+                echo "Installing standalone Docker Compose as fallback..."
+                curl -SL https://github.com/docker/compose/releases/download/v2.23.3/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+                chmod +x /usr/local/bin/docker-compose
+              fi
+
+              echo "Docker Compose installed successfully."
+            else
+              echo "Docker Compose is already installed."
+            fi
+
+            echo "Create frontend directory if it doesn't exist"
+            mkdir -p /frontend
+
+            # Ensuring Docker network exists...
+            if ! docker network inspect "$NETWORK_NAME" >/dev/null 2>&1; then
+              echo "Creating Docker network: $NETWORK_NAME"
+              docker network create "$NETWORK_NAME"
+            else
+              echo "Network $NETWORK_NAME already exists."
+            fi
+
+            echo "Remove unused images to free disk space"
+            docker image prune -af
+          EOF
+
+      - name: Copy docker-compose and config to server
         run: |
           scp -o StrictHostKeyChecking=no docker-compose.prod.yml root@${{ secrets.SERVER_IP }}:/frontend
           scp -o StrictHostKeyChecking=no nginx.frontend.conf root@${{ secrets.SERVER_IP }}:/frontend
 
-      - name: Deploy with Zero Downtime
+      - name: Deploy Frontend via SSH
         env:
           FRONTEND_IMAGE: ${{ env.REGISTRY }}/${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
         run: |
           ssh -o StrictHostKeyChecking=no root@${{ secrets.SERVER_IP }} << EOF
             cd /frontend
-          
+
             export DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}
             export IMAGE_NAME=${{ env.IMAGE_NAME }}
             export APP_NAME=${{ secrets.APP_NAME }}
-            export DEPLOYMENT_TIMEOUT=${{ env.DEPLOYMENT_TIMEOUT }}
-            export SHORT_SHA=${{ env.SHORT_SHA }}
-          
+
             echo "Pulling latest frontend image..."
-            docker pull \${FRONTEND_IMAGE}
+            docker pull ${FRONTEND_IMAGE}
 
-            # Generate new container name with timestamp and short SHA
-            TIMESTAMP=\$(date +%Y%m%d%H%M%S)
-            NEW_CONTAINER_NAME=\${APP_NAME}_frontend_\${TIMESTAMP}_\${SHORT_SHA}
-
-            # Start new container with health check
-            echo "Starting new container..."
+            echo "Run with the appropriate docker compose command"
             if command -v docker compose &> /dev/null; then
-              docker compose -f docker-compose.prod.yml run -d \
-                --name \${NEW_CONTAINER_NAME} \
-                --network \${NETWORK_NAME} \
-                --health-cmd "curl -f http://localhost:3000 || exit 1" \
-                --health-interval 5s \
-                --health-retries 6 \
-                --health-timeout 2s \
-                --health-start-period 10s \
-                frontend
+              docker compose -f docker-compose.prod.yml down
+              docker compose -f docker-compose.prod.yml up -d
             else
-              docker-compose -f docker-compose.prod.yml run -d \
-                --name \${NEW_CONTAINER_NAME} \
-                --network \${NETWORK_NAME} \
-                --health-cmd "curl -f http://localhost:3000 || exit 1" \
-                --health-interval 5s \
-                --health-retries 6 \
-                --health-timeout 2s \
-                --health-start-period 10s \
-                frontend
+              docker-compose -f docker-compose.prod.yml down
+              docker-compose -f docker-compose.prod.yml up -d
             fi
-
-            # Wait for new container to become healthy
-            echo "Waiting for new container to become healthy..."
-            START_TIME=\$(date +%s)
-            while true; do
-              CONTAINER_STATUS=\$(docker inspect --format '{{.State.Health.Status}}' \${NEW_CONTAINER_NAME})
-              
-              if [ "\$CONTAINER_STATUS" = "healthy" ]; then
-                echo "New container is healthy!"
-                break
-              fi
-              
-              CURRENT_TIME=\$(date +%s)
-              ELAPSED_TIME=\$((CURRENT_TIME - START_TIME))
-              
-              if [ \$ELAPSED_TIME -gt \$DEPLOYMENT_TIMEOUT ]; then
-                echo "Timeout reached. New container did not become healthy."
-                docker logs \${NEW_CONTAINER_NAME}
-                docker rm -f \${NEW_CONTAINER_NAME}
-                exit 1
-              fi
-              
-              sleep 5
-              echo "Waiting for container to become healthy... Current status: \$CONTAINER_STATUS"
-            done
-
-            # Update Nginx configuration (if needed)
-            # docker exec \${APP_NAME}_nginx nginx -s reload
-
-            # Stop and remove old container
-            OLD_CONTAINER_ID=\$(docker ps -q -f name=\${APP_NAME}_frontend)
-            if [ ! -z "\$OLD_CONTAINER_ID" ]; then
-              echo "Stopping old container..."
-              docker stop \$OLD_CONTAINER_ID
-              docker rm \$OLD_CONTAINER_ID
-            fi
-
-            # Rename new container to standard name
-            echo "Renaming new container to standard name..."
-            docker rename \${NEW_CONTAINER_NAME} \${APP_NAME}_frontend
-
-            # Clean up old containers
-            echo "Cleaning up old containers..."
-            docker ps -a -q -f name=\${APP_NAME}_frontend_ | grep -v \$(docker ps -q -f name=\${APP_NAME}_frontend) | xargs --no-run-if-empty docker rm -f
-
-            echo "Deployment completed successfully with zero downtime!"
           EOF
