@@ -10,6 +10,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+      start_period: 20s
 
   nginx:
     image: nginx:alpine
@@ -22,9 +23,16 @@ services:
       - frontend
     volumes:
       - ./nginx.frontend.conf:/etc/nginx/nginx.conf:ro
-      - /etc/letsencrypt/live/abdeel.me/:/etc/letsencrypt/live/abdeel.me/:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot
+      - ./logs/nginx:/var/log/nginx
     networks:
       - fullstack-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
 networks:
   fullstack-network:
