@@ -92,7 +92,7 @@ jobs:
         env:
           FRONTEND_IMAGE: ${{ env.REGISTRY }}/${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST_IP }} << EOF
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST_IP }} << 'EOF'
             cd /frontend
 
             export DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}
