@@ -17,11 +17,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Download deployment files
-        uses: actions/download-artifact@v4
+      - name: 📥 Download deployment files from CI workflow
+        uses: dawidd6/action-download-artifact@v10
         with:
+          workflow: ci.yml
+          workflow_conclusion: success
           name: deploy-files
           path: ./deployment
+          run_id: ${{ github.event.workflow_run.id }}
 
       - name: 🔐 Set up SSH Key
         uses: shimataro/ssh-key-action@v2
