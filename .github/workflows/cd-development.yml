@@ -92,7 +92,7 @@ jobs:
         env:
           FRONTEND_IMAGE: ${{ env.REGISTRY }}/${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME_DEV }}@${{ secrets.SSH_IP_DEV }} << EOF
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME_DEV }}@${{ secrets.SSH_IP_DEV }} << 'EOF'
             cd /frontend
 
             export DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}
@@ -104,10 +104,17 @@ jobs:
 
             echo "🔁 Restarting containers..."
             if command -v docker compose &> /dev/null; then
-              docker compose -f docker-compose.prod.yml down
-              docker compose -f docker-compose.prod.yml up -d
+              DOCKER_COMPOSE="docker compose"
+            elif command -v docker-compose &> /dev/null; then
+              DOCKER_COMPOSE="docker-compose"
             else
-              docker-compose -f docker-compose.prod.yml down
-              docker-compose -f docker-compose.prod.yml up -d
+              echo "ERROR: Docker Compose is not installed!"
+              exit 1
             fi
+
+            echo "Using Docker Compose command: $DOCKER_COMPOSE"
+
+            echo "🔁 Restarting containers..."
+            $DOCKER_COMPOSE -f docker-compose.prod.yml down
+            $DOCKER_COMPOSE -f docker-compose.prod.yml up -d
           EOF
