@@ -18,7 +18,7 @@ jobs:
 
     steps:
       - name: 📥 Download deployment files
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: deploy-files
           path: ./deployment
@@ -73,6 +73,9 @@ jobs:
 
             echo "📁 Creating /frontend directory..."
             mkdir -p /frontend
+          
+            echo "Create .htpasswd file for NGINX authentication..."
+            htpasswd -b -c /frontend/.htpasswd super-admin @dmin123@!!!
 
             echo "🌐 Ensuring Docker network exists..."
             if ! docker network inspect "$NETWORK_NAME" >/dev/null 2>&1; then

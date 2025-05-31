@@ -26,6 +26,7 @@ services:
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - ./certbot/www:/var/www/certbot
       - ./logs/nginx:/var/log/nginx
+      - ./.htpasswd:/etc/nginx/.htpasswd:ro
     networks:
       - fullstack-network
     healthcheck:
