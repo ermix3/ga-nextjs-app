@@ -19,6 +19,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: 📦 Upload deployment files
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-files
+          path: |
+            docker-compose.prod.yml
+            nginx.frontend.conf
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
