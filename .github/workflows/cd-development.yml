@@ -17,8 +17,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🧾 Checkout Repository
-        uses: actions/checkout@v4
+      - name: 📥 Download deployment files
+        uses: actions/download-artifact@v3
+        with:
+          name: deploy-files
+          path: ./deployment
 
       - name: 🔐 Set up SSH Key
         uses: shimataro/ssh-key-action@v2
@@ -85,8 +88,8 @@ jobs:
 
       - name: 📤 Copy docker-compose and NGINX config to Remote Server
         run: |
-          scp -o StrictHostKeyChecking=no docker-compose.prod.yml ${{ secrets.SSH_USERNAME_DEV }}@${{ secrets.SSH_IP_DEV }}:/frontend
-          scp -o StrictHostKeyChecking=no nginx.frontend.conf ${{ secrets.SSH_USERNAME_DEV }}@${{ secrets.SSH_IP_DEV }}:/frontend
+          scp -o StrictHostKeyChecking=no ./deployment/docker-compose.prod.yml ${{ secrets.SSH_USERNAME_DEV }}@${{ secrets.SSH_IP_DEV }}:/frontend
+          scp -o StrictHostKeyChecking=no ./deployment/nginx.frontend.conf ${{ secrets.SSH_USERNAME_DEV }}@${{ secrets.SSH_IP_DEV }}:/frontend
 
       - name: 🚀 Deploy Frontend Container
         env:
@@ -101,8 +104,8 @@ jobs:
 
             echo "📥 Pulling latest frontend image..."
             docker pull ${FRONTEND_IMAGE}
-
-            echo "🔁 Restarting containers..."
+            
+            # Set docker compose command
             if command -v docker compose &> /dev/null; then
               DOCKER_COMPOSE="docker compose"
             elif command -v docker-compose &> /dev/null; then

@@ -17,8 +17,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🧾 Checkout Repository
-        uses: actions/checkout@v4
+      - name: 📥 Download deployment files
+        uses: actions/download-artifact@v3
+        with:
+          name: deploy-files
+          path: ./deployment
 
       - name: 🔐 Set up SSH Key
         uses: shimataro/ssh-key-action@v2
@@ -85,8 +88,8 @@ jobs:
 
       - name: 📤 Copy docker-compose and NGINX config to Remote Server
         run: |
-          scp -o StrictHostKeyChecking=no docker-compose.prod.yml ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST_IP }}:/frontend
-          scp -o StrictHostKeyChecking=no nginx.frontend.conf ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST_IP }}:/frontend
+          scp -o StrictHostKeyChecking=no ./deployment/docker-compose.prod.yml ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST_IP }}:/frontend
+          scp -o StrictHostKeyChecking=no ./deployment/nginx.frontend.conf ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST_IP }}:/frontend
 
       - name: 🚀 Deploy Frontend Container
         env:
