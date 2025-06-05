@@ -2,9 +2,9 @@ name: CD - NextJS deploy to server [Production]
 
 on:
   workflow_run:
-    workflows: ["CI - NextJS frontend build, push"]
-    types: [completed]
-    branches: [main]
+    workflows: [ "CI - NextJS frontend build, push" ]
+    types: [ completed ]
+    branches: [ main ]
 
 env:
   REGISTRY: docker.io
@@ -94,24 +94,21 @@ jobs:
 
       - name: 📤 Copy docker-compose and NGINX config to Remote Server
         run: |
-          scp -o StrictHostKeyChecking=no ./deployment/docker-compose.prod.yml ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST_IP }}:/frontend
-          scp -o StrictHostKeyChecking=no ./deployment/nginx.frontend.conf ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST_IP }}:/frontend
-          scp -o StrictHostKeyChecking=no ./deployment/manage_ips.sh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST_IP }}:/frontend
+          scp -o StrictHostKeyChecking=no ./deployment/* ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST_IP }}:/frontend
 
       - name: 🚀 Deploy Frontend Container
         env:
           FRONTEND_IMAGE: ${{ env.REGISTRY }}/${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST_IP }} << 'EOF'
-            cd /frontend
-
+          
             export DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}
             export IMAGE_NAME=${{ env.IMAGE_NAME }}
             export APP_NAME=${{ secrets.APP_NAME }}
 
             echo "📥 Pulling latest frontend image..."
             docker pull ${FRONTEND_IMAGE}
-            
+          
             # Set docker compose command
             if command -v docker compose &> /dev/null; then
               DOCKER_COMPOSE="docker compose"
@@ -122,8 +119,13 @@ jobs:
               exit 1
             fi
 
-            echo "Using Docker Compose command: $DOCKER_COMPOSE"
+            echo "📂 Changing to /frontend directory..."
+            cd /frontend
+          
+            echo "🔧 Setting execute permission for manage_ips.sh..."
+            chmod +x /frontend/manage_ips.sh
 
+            echo "Using Docker Compose command: $DOCKER_COMPOSE"
             echo "🔁 Restarting containers..."
             $DOCKER_COMPOSE -f docker-compose.prod.yml down
             $DOCKER_COMPOSE -f docker-compose.prod.yml up -d
