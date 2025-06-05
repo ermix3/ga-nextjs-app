@@ -34,7 +34,7 @@ jobs:
 
       - name: 🛠️ Prepare Remote Server (Install Docker & Compose, Setup Directory & Network)
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME_DEV }}@${{ secrets.SSH_IP_DEV }} << EOF
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME_DEV }}@${{ secrets.SSH_HOST_IP_DEV }} << EOF
 
             export NETWORK_NAME=${{ env.NETWORK_NAME }}
 
@@ -76,6 +76,9 @@ jobs:
 
             echo "📁 Creating /frontend directory..."
             mkdir -p /frontend
+          
+            echo "Create .htpasswd file for NGINX authentication..."
+            htpasswd -b -c /frontend/.htpasswd super-admin @dmin123@!!!
 
             echo "🌐 Ensuring Docker network exists..."
             if ! docker network inspect "$NETWORK_NAME" >/dev/null 2>&1; then
@@ -91,14 +94,15 @@ jobs:
 
       - name: 📤 Copy docker-compose and NGINX config to Remote Server
         run: |
-          scp -o StrictHostKeyChecking=no ./deployment/docker-compose.prod.yml ${{ secrets.SSH_USERNAME_DEV }}@${{ secrets.SSH_IP_DEV }}:/frontend
-          scp -o StrictHostKeyChecking=no ./deployment/nginx.frontend.conf ${{ secrets.SSH_USERNAME_DEV }}@${{ secrets.SSH_IP_DEV }}:/frontend
+          scp -o StrictHostKeyChecking=no ./deployment/docker-compose.prod.yml ${{ secrets.SSH_USERNAME_DEV }}@${{ secrets.SSH_HOST_IP_DEV }}:/frontend
+          scp -o StrictHostKeyChecking=no ./deployment/nginx.frontend.conf ${{ secrets.SSH_USERNAME_DEV }}@${{ secrets.SSH_HOST_IP_DEV }}:/frontend
+          scp -o StrictHostKeyChecking=no ./deployment/manage_ips.sh ${{ secrets.SSH_USERNAME_DEV }}@${{ secrets.SSH_HOST_IP_DEV }}:/frontend
 
       - name: 🚀 Deploy Frontend Container
         env:
           FRONTEND_IMAGE: ${{ env.REGISTRY }}/${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME_DEV }}@${{ secrets.SSH_IP_DEV }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME_DEV }}@${{ secrets.SSH_HOST_IP_DEV }} << 'EOF'
             cd /frontend
 
             export DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}

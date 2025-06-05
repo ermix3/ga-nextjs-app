@@ -42,3 +42,6 @@ next-env.d.ts
 
 *.iml
 *.xml
+
+*.bak
+.htpasswd
