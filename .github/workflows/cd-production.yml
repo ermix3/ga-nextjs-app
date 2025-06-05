@@ -96,6 +96,7 @@ jobs:
         run: |
           scp -o StrictHostKeyChecking=no ./deployment/docker-compose.prod.yml ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST_IP }}:/frontend
           scp -o StrictHostKeyChecking=no ./deployment/nginx.frontend.conf ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST_IP }}:/frontend
+          scp -o StrictHostKeyChecking=no ./deployment/manage_ips.sh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST_IP }}:/frontend
 
       - name: 🚀 Deploy Frontend Container
         env:

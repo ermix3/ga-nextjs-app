@@ -26,6 +26,7 @@ jobs:
           path: |
             docker-compose.prod.yml
             nginx.frontend.conf
+            manage_ips.sh
 
       - name: Docker meta
         id: meta
