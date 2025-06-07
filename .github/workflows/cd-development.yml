@@ -77,6 +77,9 @@ jobs:
 
             echo "📁 Creating /frontend directory..."
             mkdir -p /frontend
+          
+            echo "📂 Creating .htpasswd file..."
+            touch /frontend/.htpasswd
 
             echo "🌐 Ensuring Docker network exists..."
             if ! docker network inspect "$NETWORK_NAME" >/dev/null 2>&1; then
