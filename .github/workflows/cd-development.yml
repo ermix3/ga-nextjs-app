@@ -1,4 +1,4 @@
-name: CD - NextJS deploy to server [Development] 🚀
+name: CD - NextJS deploy to server [Development]
 
 on:
   workflow_run:
@@ -7,7 +7,7 @@ on:
     branches: [ develop ]
 
 env:
-  REGISTRY: docker.io
+  APP_NAME: Ecom
   IMAGE_NAME: nextjs-frontend
   NETWORK_NAME: fullstack-network
 
@@ -25,6 +25,10 @@ jobs:
           name: deploy-files
           path: ./deployment
           run_id: ${{ github.event.workflow_run.id }}
+
+      - name: Read image tag
+        id: read-tag
+        run: echo "IMAGE_TAG=$(cat ./deployment/image_tag.txt)" >> $GITHUB_ENV
 
       - name: 🔐 Set up SSH Key
         uses: shimataro/ssh-key-action@v2
@@ -76,9 +80,6 @@ jobs:
 
             echo "📁 Creating /frontend directory..."
             mkdir -p /frontend
-          
-            echo "Create .htpasswd file for NGINX authentication..."
-            htpasswd -b -c /frontend/.htpasswd super-admin @dmin123@!!!
 
             echo "🌐 Ensuring Docker network exists..."
             if ! docker network inspect "$NETWORK_NAME" >/dev/null 2>&1; then
@@ -97,18 +98,16 @@ jobs:
           scp -o StrictHostKeyChecking=no ./deployment/* ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST_IP }}:/frontend
 
       - name: 🚀 Deploy Frontend Container
-        env:
-          FRONTEND_IMAGE: ${{ env.REGISTRY }}/${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME_DEV }}@${{ secrets.SSH_HOST_IP_DEV }} << 'EOF'
 
-            export DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}
+            export DOCKER_PROVIDER_USERNAME=${{ secrets.DOCKER_PROVIDER_USERNAME }}
             export IMAGE_NAME=${{ env.IMAGE_NAME }}
-            export APP_NAME=${{ secrets.APP_NAME }}
+            export IMAGE_TAG=${{ env.IMAGE_TAG }}
+            export FRONTEND_IMAGE=${{ secrets.DOCKER_PROVIDER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+            export APP_NAME=${{ env.APP_NAME }}
+            export NETWORK_NAME=${{ env.NETWORK_NAME }}
 
-            echo "📥 Pulling latest frontend image..."
-            docker pull ${FRONTEND_IMAGE}
-          
             # Set docker compose command
             if command -v docker compose &> /dev/null; then
               DOCKER_COMPOSE="docker compose"
@@ -121,7 +120,7 @@ jobs:
 
             echo "📂 Changing to /frontend directory..."
             cd /frontend
-          
+
             echo "🔧 Setting execute permission for manage_ips.sh..."
             chmod +x /frontend/manage_ips.sh
 

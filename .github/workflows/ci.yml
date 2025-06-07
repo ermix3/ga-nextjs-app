@@ -6,18 +6,44 @@ on:
   workflow_dispatch:
 
 env:
-  REGISTRY: docker.io
   IMAGE_NAME: nextjs-frontend
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     outputs:
-      image_tag: ${{ steps.meta.outputs.tags }}
+      image_tag: ${{ steps.meta.outputs.version }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKER_PROVIDER_NAME }}/${{ secrets.DOCKER_PROVIDER_USERNAME }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,latest
+            type=sha,format=short
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_PROVIDER_USERNAME }}
+          password: ${{ secrets.DOCKER_PROVIDER_TOKEN }}
+
+      - name: 🚀 Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_PROVIDER_NAME }}/${{ secrets.DOCKER_PROVIDER_USERNAME }}/${{ env.IMAGE_NAME }}:latest
+          cache-to: type=inline
+
+      - name: Save image tag for CD workflow
+        run: echo "${{ steps.meta.outputs.version }}" > image_tag.txt
 
       - name: 📦 Upload deployment files
         uses: actions/upload-artifact@v4
@@ -28,34 +54,10 @@ jobs:
             nginx.frontend.conf
             manage_ips.sh
 
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,latest
-            type=sha,format=short
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
-
-      - name: 🚀 Build and push
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
-          cache-to: type=inline
-
-      - name: Scan image for vulnerabilities
+      - name: 🔎 Scan image for vulnerabilities
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
+          image-ref: ${{ secrets.DOCKER_PROVIDER_NAME }}/${{ secrets.DOCKER_PROVIDER_USERNAME }}/${{ env.IMAGE_NAME }}:latest
           format: "table"
           exit-code: "1"
           severity: "CRITICAL"
