@@ -99,11 +99,12 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST_IP }} << 'EOF'
 
             export DOCKER_PROVIDER_USERNAME=${{ secrets.DOCKER_PROVIDER_USERNAME }}
-            export IMAGE_NAME=${{ env.IMAGE_NAME }}
-            export IMAGE_TAG=${{ env.IMAGE_TAG }}
             export FRONTEND_IMAGE=${{ secrets.DOCKER_PROVIDER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
             export APP_NAME=${{ env.APP_NAME }}
 
+            echo "📥 Pulling latest frontend image: $FRONTEND_IMAGE"
+            docker pull ${FRONTEND_IMAGE}
+          
             # Set docker compose command
             if command -v docker compose &> /dev/null; then
               DOCKER_COMPOSE="docker compose"

@@ -1,6 +1,6 @@
 services:
   frontend:
-    image: ${DOCKER_PROVIDER_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}
+    image: ${FRONTEND_IMAGE}
     container_name: ${APP_NAME}_frontend
     restart: unless-stopped
     networks:
