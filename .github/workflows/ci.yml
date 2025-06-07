@@ -53,6 +53,7 @@ jobs:
             docker-compose.prod.yml
             nginx.frontend.conf
             manage_ips.sh
+            image_tag.txt
 
       - name: 🔎 Scan image for vulnerabilities
         uses: aquasecurity/trivy-action@master
