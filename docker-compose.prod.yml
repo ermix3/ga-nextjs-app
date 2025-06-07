@@ -5,22 +5,39 @@ services:
     restart: unless-stopped
     networks:
       - fullstack-network
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://abdeel.me/api}
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3000" ]
+      test: [ "CMD-SHELL", "curl --fail --silent --show-error http://localhost:3000 || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+        tag: "${APP_NAME}-frontend"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
 
   nginx:
     image: nginx:alpine
     container_name: ${APP_NAME}_nginx
     restart: unless-stopped
+    depends_on:
+      - frontend
     ports:
       - "80:80"
       - "443:443"
-    depends_on:
-      - frontend
     volumes:
       - ./nginx.frontend.conf:/etc/nginx/nginx.conf:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
@@ -30,10 +47,24 @@ services:
     networks:
       - fullstack-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost"]
+      test: [ "CMD-SHELL", "curl --fail --silent --show-error http://localhost || exit 1" ]
       interval: 30s
       timeout: 5s
       retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+        tag: "${APP_NAME}-nginx"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
 
 networks:
   fullstack-network:
