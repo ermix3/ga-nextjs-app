@@ -99,10 +99,9 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME_DEV }}@${{ secrets.SSH_HOST_IP_DEV }} << 'EOF'
 
             export DOCKER_PROVIDER_USERNAME=${{ secrets.DOCKER_PROVIDER_USERNAME }}
-            export IMAGE_NAME=${{ env.IMAGE_NAME }}
-            export IMAGE_TAG=${{ env.IMAGE_TAG }}
             export FRONTEND_IMAGE=${{ secrets.DOCKER_PROVIDER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
             export APP_NAME=${{ env.APP_NAME }}
+            export NETWORK_NAME=${{ env.NETWORK_NAME }}
 
             # Set docker compose command
             if command -v docker compose &> /dev/null; then
