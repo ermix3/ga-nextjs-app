@@ -12,7 +12,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     outputs:
-      image_tag: ${{ steps.meta.outputs.version }}
+      image_tag: ${{ steps.meta.outputs.tags }}
 
     steps:
       - name: Checkout
@@ -43,7 +43,9 @@ jobs:
           cache-to: type=inline
 
       - name: Save image tag for CD workflow
-        run: echo "${{ steps.meta.outputs.version }}" > image_tag.txt
+        run: |
+          echo "${{ steps.meta.outputs.tags }}" | tr ',' '\n' | grep 'sha-' | sed 's/.*://g' > image_tag.txt
+
 
       - name: 📦 Upload deployment files
         uses: actions/upload-artifact@v4

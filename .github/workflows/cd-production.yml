@@ -102,9 +102,6 @@ jobs:
             export FRONTEND_IMAGE=${{ secrets.DOCKER_PROVIDER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
             export APP_NAME=${{ env.APP_NAME }}
 
-            echo "📥 Pulling latest frontend image: $FRONTEND_IMAGE"
-            docker pull ${FRONTEND_IMAGE}
-          
             # Set docker compose command
             if command -v docker compose &> /dev/null; then
               DOCKER_COMPOSE="docker compose"
