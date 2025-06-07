@@ -4,7 +4,7 @@ services:
     container_name: ${APP_NAME}_frontend
     restart: unless-stopped
     networks:
-      - ${NETWORK_NAME}
+      - fullstack-network
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:3000" ]
       interval: 30s
@@ -28,7 +28,7 @@ services:
       - ./logs/nginx:/var/log/nginx
       - ./.htpasswd:/etc/nginx/.htpasswd:ro
     networks:
-      - ${NETWORK_NAME}
+      - fullstack-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost"]
       interval: 30s
@@ -36,5 +36,5 @@ services:
       retries: 3
 
 networks:
-  ${NETWORK_NAME}:
+  fullstack-network:
     external: true
