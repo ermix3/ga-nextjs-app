@@ -102,6 +102,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST_IP }} << 'EOF'
 
             export DOCKER_PROVIDER_USERNAME=${{ secrets.DOCKER_PROVIDER_USERNAME }}
+            export DOCKER_PROVIDER_TOKEN=${{ secrets.DOCKER_PROVIDER_TOKEN }}
             export FRONTEND_IMAGE=${{ secrets.DOCKER_PROVIDER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
             export APP_NAME=${{ env.APP_NAME }}
             export NETWORK_NAME=${{ env.NETWORK_NAME }}
@@ -119,6 +120,9 @@ jobs:
             echo "📂 Changing to /frontend directory..."
             cd /frontend
 
+            echo "🔐 Logging in to Docker registry..."
+            echo "$DOCKER_PROVIDER_TOKEN" | docker login -u "$DOCKER_PROVIDER_USERNAME" --password-stdin
+      
             echo "🔧 Setting execute permission for manage_ips.sh..."
             chmod +x /frontend/manage_ips.sh
 
