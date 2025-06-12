@@ -111,7 +111,7 @@ jobs:
 
       - name: 📤 Copy docker-compose and NGINX config to Remote Server
         run: |
-          scp -o StrictHostKeyChecking=no ./deployment/. ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST_IP }}:/frontend
+          scp -o StrictHostKeyChecking=no ./deployment/* ./deployment/.*  ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST_IP }}:/frontend
 
       - name: 🚀 Deploy Frontend Container
         run: |
