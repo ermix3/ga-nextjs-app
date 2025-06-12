@@ -40,6 +40,7 @@ jobs:
 
       - name: 📂 Prepare deployment files
         run: |
+          ls -la ./server-config/frontend
           cp -r ./server-config/frontend/* ./deployment/
           ls -la ./deployment/
 
