@@ -29,7 +29,7 @@ jobs:
       - name: 📂 Checkout server-config repo
         uses: actions/checkout@v4
         with:
-          repository: ${ secrets.SERVER_CONFIG_REPO }
+          repository: ${{ secrets.SERVER_CONFIG_REPO }}
           token: ${{ secrets.GH_ACCESS_TOKEN }}
           path: server-config
           ref: master
