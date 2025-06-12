@@ -33,15 +33,13 @@ jobs:
           token: ${{ secrets.GH_ACCESS_TOKEN }}
           path: server-config
           ref: master
-          sparse-checkout: |
-            frontend/
-            frontend/.env
-          sparse-checkout-cone-mode: false
+          sparse-checkout: frontend
+          sparse-checkout-cone-mode: true
 
       - name: 📂 Prepare deployment files
         run: |
           ls -la ./server-config/frontend
-          cp -r ./server-config/frontend/* ./deployment/
+          cp -r ./server-config/frontend/. ./deployment/
           ls -la ./deployment/
 
       - name: Read image tag
