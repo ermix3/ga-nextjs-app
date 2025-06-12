@@ -33,8 +33,10 @@ jobs:
           token: ${{ secrets.GH_ACCESS_TOKEN }}
           path: server-config
           ref: master
-          sparse-checkout: frontend
-          sparse-checkout-cone-mode: true
+          sparse-checkout: |
+            frontend/
+            frontend/.env
+          sparse-checkout-cone-mode: false
 
       - name: 📂 Prepare deployment files
         run: |
