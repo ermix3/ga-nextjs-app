@@ -6,9 +6,6 @@ COPY package*.json ./
 RUN npm ci
 COPY . .
 
-ARG NEXT_PUBLIC_API_URL=https://abdeel.me/api
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-
 RUN npm run build
 
 # Stage 2: Runtime
