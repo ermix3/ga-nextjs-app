@@ -21,6 +21,9 @@ services:
     <<: *common
     image: ${FRONTEND_IMAGE}
     container_name: ${APP_NAME}_frontend
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://abdeel.me/api}
 #    volumes:
 #      - ./frontend_data:/app/.next
 #      - ./frontend_static:/app/public
