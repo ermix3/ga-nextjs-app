@@ -21,10 +21,10 @@ services:
     <<: *common
     image: ${FRONTEND_IMAGE}
     container_name: ${APP_NAME}_frontend
-    volumes:
-      - ./frontend_data:/app/.next
-      - ./frontend_static:/app/public
-      - frontend_node_modules:/app/node_modules
+#    volumes:
+#      - ./frontend_data:/app/.next
+#      - ./frontend_static:/app/public
+#      - frontend_node_modules:/app/node_modules
     healthcheck:
       test:
         [
